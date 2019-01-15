@@ -2,37 +2,69 @@ import numpy as np
 import itertools
 import cPickle as pickle
 ref_harmonics = []
-ref_harmonics += [np.array([[ 2.1 , 0.49],
-                      [ 0.73,-0.21],
-                      [ 0.19,-0.1]])]
+#ref_harmonics += [np.array([[ 2.1 , 0.49],
+#                      [ 0.73,-0.21],
+#                      [ 0.19,-0.1]])]
+#
+#ref_harmonics += [np.array([[ 2.1 ,-0.49],
+#                      [ 0.73, 0.21],
+#                      [ 0.19, 0.1]])]
+#
+#ref_harmonics += [np.array([[-0.49, 2.1],
+#                      [-0.73, 0.21],
+#                      [-0.1 ,-0.19]])]
+#
+#ref_harmonics += [np.array([[ 0.49, 2.1],
+#                      [-0.73,-0.21],
+#                      [ 0.1 ,-0.19]])]
+#
+#ref_harmonics += [np.array([[-2.1 ,-0.49],
+#                      [ 0.73,-0.21],
+#                      [-0.19, 0.1]])]
+#
+#ref_harmonics += [np.array([[-2.1 , 0.49],
+#                      [ 0.73, 0.21],
+#                      [-0.19,-0.1]])]
+#
+#ref_harmonics += [np.array([[ 0.49,-2.1],
+#                      [-0.73, 0.21],
+#                      [ 0.1 , 0.19]])]
+#
+#ref_harmonics += [np.array([[-0.49,-2.1],
+#                      [-0.73,-0.21],
+#                      [-0.1 , 0.19]])]
 
-ref_harmonics += [np.array([[ 2.1 ,-0.49],
-                      [ 0.73, 0.21],
-                      [ 0.19, 0.1]])]
+ref_harmonics += [np.array([[ 1.80, 0.11 ],
+                            [ 0.59,-0.26 ],
+                            [ 0.17,-0.11 ]])]
 
-ref_harmonics += [np.array([[-0.49, 2.1],
-                      [-0.73, 0.21],
-                      [-0.1 ,-0.19]])]
+ref_harmonics += [np.array([[ 1.80,-0.11 ],
+                            [ 0.59, 0.26 ],
+                            [ 0.17, 0.11 ]])]
 
-ref_harmonics += [np.array([[ 0.49, 2.1],
-                      [-0.73,-0.21],
-                      [ 0.1 ,-0.19]])]
+ref_harmonics += [np.array([[-0.11, 1.80 ],
+                            [-0.59, 0.26 ],
+                            [-0.11,-0.17 ]])]
 
-ref_harmonics += [np.array([[-2.1 ,-0.49],
-                      [ 0.73,-0.21],
-                      [-0.19, 0.1]])]
+ref_harmonics += [np.array([[ 0.11, 1.80 ],
+                            [-0.59,-0.26 ],
+                            [ 0.11,-0.17 ]])]
 
-ref_harmonics += [np.array([[-2.1 , 0.49],
-                      [ 0.73, 0.21],
-                      [-0.19,-0.1]])]
+ref_harmonics += [np.array([[-1.80,-0.11 ],
+                            [ 0.59,-0.26 ],
+                            [-0.17, 0.11 ]])]
 
-ref_harmonics += [np.array([[ 0.49,-2.1],
-                      [-0.73, 0.21],
-                      [ 0.1 , 0.19]])]
+ref_harmonics += [np.array([[-1.80, 0.11 ],
+                            [ 0.59, 0.26 ],
+                            [-0.17,-0.11 ]])]
 
-ref_harmonics += [np.array([[-0.49,-2.1],
-                      [-0.73,-0.21],
-                      [-0.1 , 0.19]])]
+ref_harmonics += [np.array([[ 0.11,-1.80 ],
+                            [-0.59, 0.26 ],
+                            [ 0.11, 0.17 ]])]
+
+ref_harmonics += [np.array([[-0.11,-1.80 ],
+                            [-0.59,-0.26 ],
+                            [-0.11, 0.17 ]])]
 
 ref_harmonics = np.array(ref_harmonics)
 
