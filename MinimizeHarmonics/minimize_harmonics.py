@@ -1,70 +1,90 @@
 import numpy as np
 import itertools
-import cpickle as pickle
+import cPickle as pickle
+ref_harmonics = []
+ref_harmonics += [np.array([[ 2.1 , 0.49],
+                      [ 0.73,-0.21],
+                      [ 0.19,-0.1]])]
+
+ref_harmonics += [np.array([[ 2.1 ,-0.49],
+                      [ 0.73, 0.21],
+                      [ 0.19, 0.1]])]
+
+ref_harmonics += [np.array([[-0.49, 2.1],
+                      [-0.73, 0.21],
+                      [-0.1 ,-0.19]])]
+
+ref_harmonics += [np.array([[ 0.49, 2.1],
+                      [-0.73,-0.21],
+                      [ 0.1 ,-0.19]])]
+
+ref_harmonics += [np.array([[-2.1 ,-0.49],
+                      [ 0.73,-0.21],
+                      [-0.19, 0.1]])]
+
+ref_harmonics += [np.array([[-2.1 , 0.49],
+                      [ 0.73, 0.21],
+                      [-0.19,-0.1]])]
+
+ref_harmonics += [np.array([[ 0.49,-2.1],
+                      [-0.73, 0.21],
+                      [ 0.1 , 0.19]])]
+
+ref_harmonics += [np.array([[-0.49,-2.1],
+                      [-0.73,-0.21],
+                      [-0.1 , 0.19]])]
+
+ref_harmonics = np.array(ref_harmonics)
+
+s2_harmonics = np.array([[ 2.1,-0.49],
+                         [0.73, 0.21],
+                         [0.19, 0.10]])
+
+MQXFS6a_harmonics = np.array([[-4.26,  3.06],
+                              [ 0.66, -1.59],
+                              [-1.39, -1.39]])
+
+def compute_delta_harmonics(ref_harmonics, combination):
+    comb=list(combination)
+    delta_harmonics =  np.sum(ref_harmonics[comb],0)
+    #delta_harmonics =  np.sum(ref_harmonics[comb],0)
+    #delta_harmonics =  ref_harmonics[comb]
+    return delta_harmonics
 
 def create_harmonics_data():
-    try:
-        print "tot_harmonics.pickle detected, using that"
-        tot_harmonics = pickle.load("tot_harmonics.pickle")
-    except:
-        print "tot_harmonics.pickle not detected, creating data"
-        s_array = []
-        s_array += [np.array([[ 1,-1],
-                        [ 1,-1],
-                        [ 1,-1]])]
-        s_array += [np.array([[ 1, 1],
-                        [ 1, 1],
-                        [ 1, 1]])]
-        s_array += [np.array([[ 1, 1],
-                        [-1, 1],
-                        [-1,-1]])]
-        s_array += [np.array([[-1, 1],
-                        [-1,-1],
-                        [ 1,-1]])]
-        s_array += [np.array([[-1, 1],
-                        [ 1,-1],
-                        [-1, 1]])]
-        s_array += [np.array([[-1,-1],
-                        [ 1, 1],
-                        [-1,-1]])]
-        s_array += [np.array([[-1,-1],
-                        [-1, 1],
-                        [ 1, 1]])]
-        s_array += [np.array([[ 1,-1],
-                        [-1,-1],
-                        [-1, 1]])]
+    harmonics = MQXFS6a_harmonics
 
-        s_array = np.array(s_array)
+    combination_vector = (0,1,2,3,4,5,6,7)
+    all_combinations = []
+    for comb_element in combination_vector:
+        all_combinations += list(itertools.combinations(combination_vector,comb_element+1))
 
-        s1_harmonics = np.array([[ 2.1,-0.49],
-                                 [0.73, 0.21],
-                                 [0.19, 0.10]])
+    tot_harmonics = []
+    for combination in all_combinations:
+        comb = np.array(combination)
+        delta_harmonics = compute_delta_harmonics(ref_harmonics, combination)
+        tot_harmonics.append(harmonics + delta_harmonics)
+    tot_harmonics = np.array(tot_harmonics)
 
-        MQXFS6a_harmonics = np.array([[-4.26,  3.06],
-                                      [ 0.66, -1.59],
-                                      [-0.34, -1.39]])
+    return tot_harmonics, all_combinations 
 
-        harmonics = MQXFS6a_harmonics
+#print compute_delta_harmonics(ref_harmonics, (0,1,6,7))
+#exit()
 
-        combination_vector = (0,1,2,3,4,5,6,7)
-        all_combinations = []
-        for comb_element in combination_vector:
-            all_combinations += list(itertools.combinations(combination_vector,comb_element+1))
+number_of_printed_combinations = 10
+min_row = 0
+tot_harmonics, all_combinations = create_harmonics_data()
+#min_row_sums = np.sum(np.abs(tot_harmonics)[:,min_row,:],1) # minimum row sum absolute
+#min_row_sums = np.abs(np.sum(tot_harmonics[:,min_row,:],1)) # minimum row absolute sum
+min_row_sums = np.sum(np.sum(np.abs(tot_harmonics)[:,:,:],1),1)# min sum sum absolute
+sorted_list_indices = np.argsort(min_row_sums)
+for i in range(number_of_printed_combinations):
+    combination_index = sorted_list_indices[i]
+    print "__________________________"
+    print "combination_index:", combination_index, "combination:", np.array(all_combinations[combination_index])+1
+    print "total harmonics:\n", tot_harmonics[combination_index]#.flatten()
 
-        tot_harmonics = []
-        for combination in all_combinations:
-            comb = np.array(combination)
-            delta_harmonics = s1_harmonics * np.sum(s_array[comb],0)
-            tot_harmonics.append(harmonics + delta_harmonics)
 
-        print "Dump tot_harmonics.pickle"
-        pickle.dump(tot_harmonics, "tot_harmonics.pickle")
-
-    return tot_harmonics
-
-tot_harmonics = create_harmonics_data()
-
-print np.abs(tot_harmonics)[:,0,:]
 
     
 
