@@ -34,10 +34,10 @@ def solve_e_m(beta):
 
     e_m_sol = optimize.root(beta_root_function, 0)
 
-    return e_m_sol['x']
+    return e_m_sol['x'][0]
 
 def round_filament_loss_factor(beta):
-    e_m=0
+    e_m = solve_e_m(beta)
     e_r_space = np.linspace(1,e_m,1e7)[1:]
     loss_integration = np.trapz(loss_factor_integrand(e_r_space), x=e_r_space)
     return 8/(3*beta**2) * loss_integration - 4/(3*beta)*(1-e_m**2)
