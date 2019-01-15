@@ -1,5 +1,7 @@
 import math
 import numpy as np
+from scipy import optimize
+
 mu0 = 4e-7 * math.pi
 """ Hysterisis loss [Wilson]"""
 def get_round_filament_loss_per_cycle_par(Bm, Jc_theta, a):
@@ -17,6 +19,23 @@ def get_round_filement_loss_par(T_cycle, Bm, Jc_theta, a):
 def loss_factor_integrand(e_r):
     return e_r-np.arcsin(np.sqrt(1-e_r**2.))/np.sqrt(1-e_r**2.)
 
+def beta_vs_e_m(e_m):
+    return 1-e_m*np.arcsin(np.sqrt(1-e_m**2))/np.sqrt(1-e_m**2)
+
+def get_beta_root_function(beta):
+
+    def beta_root_function(e_m):
+        return beta_vs_e_m(e_m)-beta
+
+    return beta_root_function
+
+def solve_e_m(beta):
+    beta_root_function = get_beta_root_function(beta)
+
+    e_m_sol = optimize.root(beta_root_function, 0)
+
+    return e_m_sol['x']
+
 def round_filament_loss_factor(beta):
     e_m=0
     e_r_space = np.linspace(1,e_m,1e7)[1:]
@@ -24,6 +43,7 @@ def round_filament_loss_factor(beta):
     return 8/(3*beta**2) * loss_integration - 4/(3*beta)*(1-e_m**2)
 
 def test_round_filament_loss_factor():
+    print solve_e_m(0.2)
     print round_filament_loss_factor(1)
 
 def get_round_filament_loss_per_cycle_perp(Bm, Jc_theta, a):
