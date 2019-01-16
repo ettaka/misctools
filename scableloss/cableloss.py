@@ -6,33 +6,43 @@ from scipy import optimize
 mu0 = 4e-7 * math.pi
 """Jc Nb3Sn"""
 
+NB3SNC_matparam = {}
+NB3SNC_matparam['C'] = 4.3e10
+NB3SNC_matparam['Bc20'] = 27.012
+NB3SNC_matparam['Tc0'] = 18
+
+HFMD07B_strandparam = {}
+HFMD07B_strandparam['a'] = 0.7e-3/2.
+HFMD07B_strandparam['RRR'] = 100.
+HFMD07B_strandparam['lf'] = 14e-3
+HFMD07B_strandparam['cu_to_noncu'] = 1.106
 #Bc2(T) = Bc20*(1-(T/Tc0)**2)*(1-0.31*(T/Tc0)**2.)*(1-1.77*math.log(T/Tc0))
 #Jc(B,T) = C/sqrt(B)*(1-B/Bc2(T))**2.*(1-(T/Tc0)**2)**2
 
-def Bc2(T,matparam):
+def get_Bc2(T,matparam):
     Bc20 = matparam['Bc20']
     Tc0 = matparam['Tc0']
-    return Bc20*(1-(T/Tc0)**2)*(1-0.31*(T/Tc0)**2.)*(1-1.77*np.log(T/Tc0))
+    return Bc20*(1-(T/Tc0)**2)*(1-0.31*(T/Tc0)**2.*(1-1.77*np.log(T/Tc0)))
 
-def Jc(B,T,matparam):
+def get_Jc(B,T,matparam):
     Tc0 = matparam['Tc0']
     C = matparam['C']
-    return C/np.sqrt(B)*(1-B/Bc2(T,matparam))**2.*(1-(T/Tc0)**2)**2
+    return C/np.sqrt(B)*(1-B/get_Bc2(T,matparam))**2.*(1-(T/Tc0)**2)**2
 
 def test_summers():
     matparam = {}
     matparam['C'] = 4.3e10
     matparam['Bc20'] = 27.012
     matparam['Tc0'] = 18
-    T = 1.9
+    T = 4.2
     B = 12
-    print "Bc2:", Bc2(T, matparam)
-    print "Jc:",  Jc(B, T, matparam)
+    print "Bc2:", get_Bc2(T, matparam)
+    print "Jc:",  get_Jc(B, T, matparam)
 
 """ Hysterisis loss [Wilson]"""
 def get_round_filament_loss_per_cycle_par(Bm, Jc_theta, a):
     beta = Bm/(2*mu0*Jc_theta*a)
-    loss = Bm**2./(2.*mu_0)
+    loss = Bm**2./(2.*mu0)
     if beta <= 1:
         loss *= (2*beta/3-beta**2/3)
     elif beta > 1:
@@ -74,20 +84,101 @@ def round_filament_loss_factor(beta):
     return loss_factor
 
 def test_round_filament_loss_factor():
+    T = 4.2
+    B = 12
     beta = 1
-    round_filament_loss_factor(beta)
+    print "beta:", beta
+    print "round filament loss factor:", round_filament_loss_factor(beta)
 
-def get_round_filament_loss_per_cycle_perp(Bm, Jc_theta, a):
+def get_round_filament_loss_per_cycle_perp(Bm, Jc, a):
+    print "filament perpendicular loss:"
     beta = Bm*math.pi/(4*mu0*Jc*a)
-    loss = Bm**2./(2.*mu_0)
+    print "Bm:", Bm
+    print "Bp:", Bm/beta
+    print "beta:", beta
+    loss = Bm**2./(2.*mu0)
     if beta <= 1:
-        loss *= round_filament_loss_factor(Bm,beta)
+        loss *= round_filament_loss_factor(beta)
     elif beta > 1:
         loss *= (4/(3*beta)-0.710/(beta**2.))
     return loss
 
+def test_loss_per_cycle():
+    matparam = NB3SNC_matparam
+    T = 4.2
+    B = 0.1
+    Bc2 = get_Bc2(T, matparam)
+    Jc = get_Jc(B, T, matparam)
+    a = 55e-6/2.
+    print "Bc2:", Bc2
+    print "Jc:", Jc 
+    print "filament half width:", a
+
+    loss_per_cycle = get_round_filament_loss_per_cycle_perp(B, Jc, a)
+    print "loss_per_cycle", loss_per_cycle
+
 def get_round_filement_loss_perp(T_cycle, Bm, Jc_theta, a):
     return get_round_filament_loss_per_cycle_perp(Bm, Jc_theta, a)/Tcycle
+
+""" Penetration loss filamentary composites [Wilson p.182] """
+
+def composite_penetration_loss_per_cycle_perp(f, Bm, Jc, matparam, strandparam):
+    RRR = strandparam['RRR']
+    f_eff = get_f_eff_11T(False)
+    rho0, rho1 = get_copper_rhos(RRR)
+    rho_eff = get_rho_eff(f_eff, rho0, rho1, Bm)
+    lf = strandparam['lf']
+    a = strandparam['a']
+    cu_to_noncu = strandparam['cu_to_noncu']
+    omega = 2. * math.pi * f
+    tau = get_tau_if(rho_eff, lf)
+    Bm = 0.1
+    cu_to_noncu = 1.106
+    lambd = 1/(cu_to_noncu+1.)
+    
+    Bm_eff = Bm*omega*tau/np.sqrt(omega**2.*tau**2.+1)
+    beta_eff = math.pi * Bm*omega*tau/(4*mu0*lambd*Jc*a*np.sqrt(omega**2.*tau**2+1))
+    loss = Bm_eff**2./(2.*mu0)
+    if beta_eff <= 1:
+        loss *= round_filament_loss_factor(beta_eff)
+    elif beta_eff > 1:
+        loss *= (4/(3*beta_eff)-0.710/(beta_eff**2.))
+    return loss
+
+def composite_penetration_loss(f, Bm, Jc, matparam, strandparam):
+    loss_per_cycle = composite_penetration_loss_per_cycle_perp(f, Bm, Jc, matparam, strandparam)
+    q = loss_per_cycle * f
+    return q
+    
+def test_composite_pen_loss_per_cycle():
+    strandparam = HFMD07B_strandparam
+    matparam = NB3SNC_matparam
+    T = 1.9
+    B = 0.1
+    Bc2 = get_Bc2(T, matparam)
+    Jc = get_Jc(B, T, matparam)
+    f = 50.
+    print "Bc2:", Bc2
+    print "Jc:", Jc 
+    print "Strand half width:", strandparam['a']
+
+    loss_per_cycle = composite_penetration_loss_per_cycle_perp(f, B, Jc, matparam, strandparam)
+    print "loss_per_cycle", loss_per_cycle
+
+def test_composite_pen_loss():
+    strandparam = HFMD07B_strandparam
+    matparam = NB3SNC_matparam
+    T = 1.9
+    B = 0.01
+    Bc2 = get_Bc2(T, matparam)
+    Jc = get_Jc(B, T, matparam)
+    f = 50.
+    print "Bc2:", Bc2
+    print "Jc:", Jc 
+    print "Strand half width:", strandparam['a']
+
+    q = composite_penetration_loss(f, B, Jc, matparam, strandparam)
+    print "composite_penetration_loss", q
 
 
 """ Inter-filament losses
@@ -193,9 +284,24 @@ def compute_11T_piece_loss(B0, Rc=3e-5, Ra=3e-7):
 	#print "P_is_a_perp [W] 11T piece: ", P_is_a_perp * tot_piece_area * piece_len
 	#print "P_is_c_perp [W] 11T piece: ", P_is_c_perp * tot_piece_area * piece_len
 
+        # P_penetration
+        strandparam = HFMD07B_strandparam
+        matparam = NB3SNC_matparam
+        T = 1.9
+        B = 0.01
+        Bc2 = get_Bc2(T, matparam)
+        Jc = get_Jc(B, T, matparam)
+
+#        print "Bc2:", Bc2
+#        print "Jc:", Jc 
+#        print "Strand half width:", strandparam['a']
+#
+        P_pen = composite_penetration_loss(f, B0, Jc, matparam, strandparam)
+    
         Pif_piece = P_if * tot_piece_area * piece_len
         Pis_piece = P_is_a_par * tot_piece_area * piece_len + P_is_a_perp * tot_piece_area * piece_len + P_is_c_perp * tot_piece_area * piece_len
-        return dBdt_rms, Pif_piece, Pis_piece
+        Ppen_piece = P_pen * tot_piece_area * piece_len
+        return dBdt_rms, Pif_piece, Pis_piece, Ppen_piece
         
 def piece_11T_losses_test():
     Bmax_list = [10.3e-3,
@@ -215,14 +321,18 @@ def piece_11T_losses_test():
                  8.3e-3,
                  7.0e-3]
 
-    print "#dBdt_rms(T/s) Pif(W) Pis(W) Ptot(W)"
+    print "#dBdt_rms(T/s) Ppen(W) Pif(W) Pis(W) Ptot(W)"
     for Bmax in Bmax_list:
-        dBdt_rms, Pif, Pis = compute_11T_piece_loss(Bmax)
-        Ptot = Pif + Pis
-        print dBdt_rms, Pif, Pis, Ptot
+        dBdt_rms, Pif, Pis, Ppen = compute_11T_piece_loss(Bmax)
+        Ptot = Pif + Pis + Ppen 
+        print dBdt_rms, Ppen, Pif, Pis, Ptot
 
 
 if __name__ == '__main__':
+    piece_11T_losses_test()
     #test_round_filament_loss_factor()
-    test_summers()
+    #test_summers()
+    #test_loss_per_cycle()
+    #test_composite_pen_loss_per_cycle()
+    #test_composite_pen_loss()
 
