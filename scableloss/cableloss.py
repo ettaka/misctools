@@ -1,8 +1,34 @@
 import math
 import numpy as np
 from scipy import optimize
+#import matplotlib.pyplot as plt
 
 mu0 = 4e-7 * math.pi
+"""Jc Nb3Sn"""
+
+#Bc2(T) = Bc20*(1-(T/Tc0)**2)*(1-0.31*(T/Tc0)**2.)*(1-1.77*math.log(T/Tc0))
+#Jc(B,T) = C/sqrt(B)*(1-B/Bc2(T))**2.*(1-(T/Tc0)**2)**2
+
+def Bc2(T,matparam):
+    Bc20 = matparam['Bc20']
+    Tc0 = matparam['Tc0']
+    return Bc20*(1-(T/Tc0)**2)*(1-0.31*(T/Tc0)**2.)*(1-1.77*np.log(T/Tc0))
+
+def Jc(B,T,matparam):
+    Tc0 = matparam['Tc0']
+    C = matparam['C']
+    return C/np.sqrt(B)*(1-B/Bc2(T,matparam))**2.*(1-(T/Tc0)**2)**2
+
+def test_summers():
+    matparam = {}
+    matparam['C'] = 4.3e10
+    matparam['Bc20'] = 27.012
+    matparam['Tc0'] = 18
+    T = 1.9
+    B = 12
+    print "Bc2:", Bc2(T, matparam)
+    print "Jc:",  Jc(B, T, matparam)
+
 """ Hysterisis loss [Wilson]"""
 def get_round_filament_loss_per_cycle_par(Bm, Jc_theta, a):
     beta = Bm/(2*mu0*Jc_theta*a)
@@ -37,14 +63,19 @@ def solve_e_m(beta):
     return e_m_sol['x'][0]
 
 def round_filament_loss_factor(beta):
+    #print "beta: ", beta
     e_m = solve_e_m(beta)
+    #print "e_m:", e_m
     e_r_space = np.linspace(1,e_m,1e7)[1:]
     loss_integration = np.trapz(loss_factor_integrand(e_r_space), x=e_r_space)
-    return 8/(3*beta**2) * loss_integration - 4/(3*beta)*(1-e_m**2)
+    #print "loss_integration:",loss_integration
+    loss_factor = 8/(3*beta**2) * loss_integration - 4/(3*beta)*(1-e_m**2)
+    #print "loss_factor: ", loss_factor
+    return loss_factor
 
 def test_round_filament_loss_factor():
-    print solve_e_m(0.2)
-    print round_filament_loss_factor(1)
+    beta = 1
+    round_filament_loss_factor(beta)
 
 def get_round_filament_loss_per_cycle_perp(Bm, Jc_theta, a):
     beta = Bm*math.pi/(4*mu0*Jc*a)
@@ -56,7 +87,7 @@ def get_round_filament_loss_per_cycle_perp(Bm, Jc_theta, a):
     return loss
 
 def get_round_filement_loss_perp(T_cycle, Bm, Jc_theta, a):
-    return get_round_filament_loss_per_cycle_par(Bm, Jc_theta, a)/Tcycle
+    return get_round_filament_loss_per_cycle_perp(Bm, Jc_theta, a)/Tcycle
 
 
 """ Inter-filament losses
@@ -192,5 +223,6 @@ def piece_11T_losses_test():
 
 
 if __name__ == '__main__':
-    test_round_filament_loss_factor()
+    #test_round_filament_loss_factor()
+    test_summers()
 
