@@ -201,9 +201,10 @@ def get_copper_rhos(RRR_in):
 def get_rho_eff(f_eff, rho0, rho1, B):
 	return f_eff*(rho0 + rho1*B)
 def get_tau_if(rho_eff, lf):
-	return mu0/2./rho_eff * (lf/2.*math.pi)**2.
+	return mu0/2./rho_eff * (lf/(2.*math.pi))**2.
+
 def get_P_if(tau_if, dBdt):
-	return 2.*tau_if/mu0 * dBdt
+	return 2.*tau_if/mu0 * dBdt**2.
 
 ########################## 
 
@@ -223,7 +224,7 @@ def get_tau_is_a_perp(b, p, c, Ra):
 def get_tau_is_c_perp(N, b, p, c, Rc):
 	return mu0*N*(N-1.)*c*p/(240.*b*Rc)
 def get_P_is(tau, dBdt):
-	return 2.*tau*dBdt/mu0
+	return 2.*tau*dBdt**2./mu0
 
 def get_tot_area(b, c, nof_cables):
 	b = 1.25e-3
@@ -268,6 +269,7 @@ def compute_11T_piece_loss(B0, Rc=3e-5, Ra=3e-7):
 	rho0, rho1 = get_copper_rhos(RRR)
 	rho_eff = get_rho_eff(f_eff, rho0, rho1, B_rms)
 	tau_if = get_tau_if(rho_eff, lf)
+        #print "tau_if:", tau_if
 	P_if = get_P_if(tau_if, dBdt_rms)
 
 	#nof_cables = 9+8+3+2+16+18
