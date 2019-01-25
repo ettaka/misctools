@@ -1,7 +1,7 @@
 import math
 import numpy as np
 from scipy import optimize
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 mu0 = 4e-7 * math.pi
 """Jc Nb3Sn"""
@@ -323,12 +323,24 @@ def piece_11T_losses_test():
                  8.3e-3,
                  7.0e-3]
 
+
+    dBdt_rms_list = []
+    Pif_list = []
+    Pis_list = []
+    Ppen_list = []
+    
     print "#dBdt_rms(T/s) Ppen(W) Pif(W) Pis(W) Ptot(W)"
     for Bmax in Bmax_list:
         dBdt_rms, Pif, Pis, Ppen = compute_11T_piece_loss(Bmax)
         Ptot = Pif + Pis + Ppen 
         print dBdt_rms, Ppen, Pif, Pis, Ptot
+        dBdt_rms_list.append(dBdt_rms)
+        Pif_list.append(Pif)
+        Pis_list.append(Pis)
+        Ppen_list.append(Ppen)
 
+    plt.plot(Bmax_list, Pif_list)
+    plt.show()
 
 if __name__ == '__main__':
     piece_11T_losses_test()
