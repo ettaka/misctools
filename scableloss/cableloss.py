@@ -206,7 +206,16 @@ def get_tau_if(rho_eff, lf):
 def get_P_if(tau_if, dBdt):
 	return 2.*tau_if/mu0 * dBdt**2.
 
+def get_P_if_winkler(tau_if, B, f):
+        omega = 2 * math.pi * f
+	return 2.*math.pi*tau_if * omega * B**2 * f/(mu0*(1+(omega*tau_if)**2.))
+
 ########################## 
+
+# cross-check winkler p.36
+# reference 3.23 mW/cm^3 
+# print get_P_if_winkler(26e-3, 10.3e-3, 50)*1e-2**3*1e3
+
 
 """ Inter-Strand losses
 parameter description (11T example)
@@ -269,8 +278,9 @@ def compute_11T_piece_loss(B0, Rc=3e-5, Ra=3e-7):
 	rho0, rho1 = get_copper_rhos(RRR)
 	rho_eff = get_rho_eff(f_eff, rho0, rho1, B_rms)
 	tau_if = get_tau_if(rho_eff, lf)
-        #print "tau_if:", tau_if
+        print "tau_if:", tau_if
 	P_if = get_P_if(tau_if, dBdt_rms)
+	P_if_winkler = get_P_if_winkler(tau_if, B0, f)
 
 	#nof_cables = 9+8+3+2+16+18
 	nof_cables = 9+16
@@ -280,7 +290,7 @@ def compute_11T_piece_loss(B0, Rc=3e-5, Ra=3e-7):
 
 	#print "total piece area 11T:", tot_piece_area
 	#print "piece len 11T:", piece_len
-	#print "Piece volume 11T:", piece_len * tot_piece_area
+	print "Piece volume 11T:", piece_len * tot_piece_area * 1e3**2
 	#print "P_if [W] 11T piece: ", P_if * tot_piece_area * piece_len
 	#print "P_is_a_par [W] 11T piece: ", P_is_a_par * tot_piece_area * piece_len
 	#print "P_is_a_perp [W] 11T piece: ", P_is_a_perp * tot_piece_area * piece_len
@@ -301,9 +311,11 @@ def compute_11T_piece_loss(B0, Rc=3e-5, Ra=3e-7):
         P_pen = composite_penetration_loss(f, B0, Jc, matparam, strandparam)
     
         Pif_piece = P_if * tot_piece_area * piece_len
+        Pif_piece_winkler = P_if_winkler * tot_piece_area * piece_len
+        
         Pis_piece = P_is_a_par * tot_piece_area * piece_len + P_is_a_perp * tot_piece_area * piece_len + P_is_c_perp * tot_piece_area * piece_len
         Ppen_piece = P_pen * tot_piece_area * piece_len
-        return dBdt_rms, Pif_piece, Pis_piece, Ppen_piece
+        return dBdt_rms, Pif_piece, Pif_piece_winkler, Pis_piece, Ppen_piece
         
 def piece_11T_losses_test():
     Bmax_list = [10.3e-3,
@@ -323,11 +335,11 @@ def piece_11T_losses_test():
                  8.3e-3,
                  7.0e-3]
 
-    print "#dBdt_rms(T/s) Ppen(W) Pif(W) Pis(W) Ptot(W)"
+    print "#dBdt_rms(T/s) Ppen(W) Pif(W) Pif_winkler(W) Pis(W) Ptot(W)"
     for Bmax in Bmax_list:
-        dBdt_rms, Pif, Pis, Ppen = compute_11T_piece_loss(Bmax)
+        dBdt_rms, Pif, Pif_winkler, Pis, Ppen = compute_11T_piece_loss(Bmax)
         Ptot = Pif + Pis + Ppen 
-        print dBdt_rms, Ppen, Pif, Pis, Ptot
+        print dBdt_rms, Ppen, Pif, Pif_winkler, Pis, Ptot
 
 
 if __name__ == '__main__':
